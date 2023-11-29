@@ -37,8 +37,7 @@ class Ants:
             pher_paths = np.power(pher_paths, 2)  
             
             # All possible path to travel to from current node and their visibilities 
-            vis_paths = np.array(temp_vis[self.current_pos])
-            vis_paths = np.power(vis_paths, 1)  
+            vis_paths = np.array(temp_vis[self.current_pos]) 
             
             # Combining both visibilities and phermones by multiplying each pher by
             combined_paths = np.multiply(pher_paths,vis_paths) 
@@ -67,7 +66,7 @@ class Ants:
         self.found_path.append(self.start_pos)
         self.current_pos = self.start_pos
         
-    
+        
     def eval_cost(self, distances):
         """ Evaluate total cost of the stored path from ant
 
@@ -82,6 +81,7 @@ class Ants:
         for n in self.found_path:
             total_distance += distances[prev_node][n]
             prev_node=n
+        print(total_distance)
         return total_distance
 
 

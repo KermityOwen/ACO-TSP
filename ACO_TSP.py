@@ -14,8 +14,9 @@ class ACO_TSP:
         """
         # Parameters
         self.max_epoch = 100
-        self.decay_rate = 0.5
-        self.num_ants = 50
+        self.decay_rate = 0.4
+        self.num_ants = 100
+        self.dropoff_rate = 3
         
         # Ensure file path is correct
         if not isfile(graph_path):
@@ -87,6 +88,7 @@ class ACO_TSP:
         """
         return np.ones(shape=(len(graph), len(graph)))
     
+    
     def init_visibilities(self, graph):
         """ Initialise visibility by generating a scaled down distance graph by an exponent of -1
 
@@ -117,7 +119,7 @@ class ACO_TSP:
         for n in range(0, num_ants):
             if(scatter):
                 # If scatter is True, randomise the starting position for the ants
-                ant_start_pos = random.randint(0, len(self.distances)) 
+                ant_start_pos = random.randint(0, len(self.distances)-1) 
             else:
                 # If not all the starting position for all the ants are 0
                 ant_start_pos = 0
@@ -137,7 +139,7 @@ class ACO_TSP:
         """
         for ant in self.ants:
             # print(ant.eval_cost(self.distances))
-            self.pheramones = ant.eval_pher_update(1, self.pheramones, self.distances)
+            self.pheramones = ant.eval_pher_update(self.dropoff_rate, self.pheramones, self.distances)
             ant.reset_ant()
 
 
@@ -175,6 +177,7 @@ class ACO_TSP:
         found_path, eval_cost = self.eval()
         print("Final Path: " + str(found_path))
         print("Total Distance:" + str(eval_cost))
+        print(self.pheramones)
         
         
 if __name__ == "__main__":
