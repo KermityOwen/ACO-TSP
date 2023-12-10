@@ -81,7 +81,7 @@ class Ants:
         for n in self.found_path:
             total_distance += distances[prev_node][n]
             prev_node=n
-        print(total_distance)
+        # print(total_distance)
         return total_distance
 
 

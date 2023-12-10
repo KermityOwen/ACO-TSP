@@ -6,7 +6,7 @@ from typing import List
 from os.path import isfile
 
 class ACO_TSP:
-    def __init__ (self, graph_path="graph_path"):
+    def __init__ (self, graph_path="./TSPLIB_XML/brazil58.xml"):
         """Constructor for ACO_TSP class
 
         Args:
@@ -33,13 +33,17 @@ class ACO_TSP:
         # Scatter boolean determines if the ants should all start at 0, or at randomised cities
         self.ants = self.generate_ants(self.num_ants, scatter=True)
         
+        # Initialising current best path
+        self.current_best_path = []
+        self.current_best_dis = 999999999
+        
         # For debug or showcase
-        print("Distances graph: " + str(self.distances))
-        print("")
-        print("Pheramones graph: " + str(self.pheramones))
-        print("")
-        print("Heuristics graph: " + str(self.visibilities))
-        print("")
+        # print("Distances graph: " + str(self.distances))
+        # print("")
+        # print("Pheramones graph: " + str(self.pheramones))
+        # print("")
+        # print("Heuristics graph: " + str(self.visibilities))
+        # print("")
         
         # print(str(self.ants[0]) + " x", str(self.num_ants))
         # for ant in self.ants:
@@ -134,6 +138,16 @@ class ACO_TSP:
             ant.find_path(self.pheramones, self.visibilities)
 
 
+    def update_best(self):
+        """ Update current best path based on all ants traversed path
+        """
+        for ant in self.ants:
+            cost = ant.eval_cost(self.distances)
+            if cost < self.current_best_dis:
+                self.current_best_path = ant.found_path
+                self.current_best_dis = cost
+            
+
     def update_pheramones(self):
         """ Calculates and updates pheramones based on evaluation carried out in Ants class
         """
@@ -153,6 +167,7 @@ class ACO_TSP:
         """ Run a single iteration / epoch of the ACO for TSP
         """
         self.step_all()
+        self.update_best()
         self.update_pheramones()
         self.decay_pheramones()
 
@@ -168,21 +183,35 @@ class ACO_TSP:
         evaluator_ant.find_path(self.pheramones, self.visibilities)
         return evaluator_ant.found_path, evaluator_ant.eval_cost(self.distances)
         
+        
+    def eval2(self):
+        """ Evaluates based on current best stored path and current best stored distance
+            This is NOT The settled local minima but instead a path found previously as the ants traversed
+
+        Returns:
+            found_path: Array representing the found path
+            eval_cost: Number representing the total cost (distance) of the found path
+        """
+        return self.current_best_path, self.current_best_dis
+    
     
     def run(self):
         """ Run max_epoch number of iterations of the ACO
         """
         for n in range(0, self.max_epoch):
             self.epoch()
-        found_path, eval_cost = self.eval()
+        found_path, eval_cost = self.eval2()
         print("Final Path: " + str(found_path))
         print("Total Distance:" + str(eval_cost))
-        print(self.pheramones)
+        # print(self.pheramones)
         
         
 if __name__ == "__main__":
     random.seed(1)
     np.random.seed(1)
-    ACO = ACO_TSP(graph_path="./TSPLIB_XML/brazil58.xml")
+    np.seterr(divide='ignore')
+    graph_path = "./TSPLIB_XML/" + input("Graph name here (Graphs stored in ./TSPLIB_XML): ")
+    print("")
+    ACO = ACO_TSP(graph_path=graph_path)
     ACO.run()
 
