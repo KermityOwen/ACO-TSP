@@ -2,6 +2,7 @@ from Ants import Ants
 import numpy as np
 import xml.dom.minidom as xml
 import random
+import matplotlib.pyplot as plot
 from typing import List
 from os.path import isfile
 
@@ -13,9 +14,9 @@ class ACO_TSP:
             graph_path: path to TSPLIB in XML file. Defaults to "graph_path".
         """
         # Parameters
-        self.max_epoch = 100
-        self.decay_rate = 0.4
-        self.num_ants = 100
+        self.max_epoch = 300
+        self.decay_rate = 0.9
+        self.num_ants = 40
         self.dropoff_rate = 3
         
         # Ensure file path is correct
@@ -37,18 +38,23 @@ class ACO_TSP:
         self.current_best_path = []
         self.current_best_dis = 999999999
         
-        # For debug or showcase
-        # print("Distances graph: " + str(self.distances))
-        # print("")
-        # print("Pheramones graph: " + str(self.pheramones))
-        # print("")
-        # print("Heuristics graph: " + str(self.visibilities))
-        # print("")
+        self.converged_at = 0
         
-        # print(str(self.ants[0]) + " x", str(self.num_ants))
-        # for ant in self.ants:
-        #     print(ant)
         
+    def __str__(self):
+        """ Overrides to_string function
+        """
+        print("Distances graph: " + str(self.distances))
+        print("")
+        print("Pheramones graph: " + str(self.pheramones))
+        print("")
+        print("Heuristics graph: " + str(self.visibilities))
+        print("")
+        
+        print(str(self.ants[0]) + " x", str(self.num_ants))
+        for ant in self.ants:
+            print(ant)
+
 
     def parse_graph(self, path):
         """ Turns XML into a graph represented by an adjacency matrix
@@ -141,11 +147,24 @@ class ACO_TSP:
     def update_best(self):
         """ Update current best path based on all ants traversed path
         """
+        initial_cost = self.ants[0].eval_cost(self.distances)
+        counter = 0
+        
         for ant in self.ants:
             cost = ant.eval_cost(self.distances)
             if cost < self.current_best_dis:
                 self.current_best_path = ant.found_path
                 self.current_best_dis = cost
+                
+            if initial_cost == cost:
+                # print(initial_cost)
+                # print(cost)
+                counter += 1
+                
+        if counter > self.num_ants * 0.9:
+            return True
+        return False
+            
             
 
     def update_pheramones(self):
@@ -161,15 +180,15 @@ class ACO_TSP:
         """ Decays / evaporates pheramones by decay rate
         """
         self.pheramones = self.decay_rate * self.pheramones
-        
-        
+                
     def epoch(self):
         """ Run a single iteration / epoch of the ACO for TSP
         """
         self.step_all()
-        self.update_best()
+        is_converged = self.update_best()
         self.update_pheramones()
         self.decay_pheramones()
+        return is_converged
 
 
     def eval(self):
@@ -198,20 +217,103 @@ class ACO_TSP:
     def run(self):
         """ Run max_epoch number of iterations of the ACO
         """
+        converged_n = self.max_epoch
         for n in range(0, self.max_epoch):
-            self.epoch()
+            is_converged = self.epoch()
+            if (is_converged):
+                converged_n = n
+                break
+            
         found_path, eval_cost = self.eval2()
+        self.converged_at = converged_n
         print("Final Path: " + str(found_path))
         print("Total Distance:" + str(eval_cost))
+        print("Converged at (process killed at): " + str(converged_n))
+        # print(self.max_epoch)
         # print(self.pheramones)
+        
+        
+    def run_eval_epoch(self, sep=50, max=300):
+        """ Run parameter tuning evaluation of max_epoch
+
+        Args:
+            sep: Seperation, how much the max epoch increases by each evaluation. Defaults to 50.
+            max: Maximum, the max max_epoch. Defaults to 300.
+        """
+        current = sep
+        arr_result = []
+        arr_x = []
+        while (current<=max):
+            # Changing max_epoch
+            self.max_epoch = current
+            
+            # Resetting current best path and pheramones
+            self.pheramones = self.init_pheramones(self.distances)
+            self.current_best_path = []
+            self.current_best_dis = 999999999
+            
+            # Running the simulation
+            print("Current Max Epoch: " + str(self.max_epoch))
+            self.run()
+            print("")
+            
+            # Storing the result
+            arr_result.append(self.current_best_dis)
+            arr_x.append(current)
+            current += sep
+        
+        # for x in arr_result:
+        #     print(x),
+        plot.plot(arr_x, arr_result)
+        plot.show()
+        
+        
+    
+    def run_eval_ants(self, sep=50, max=300):
+        """ Run parameter tuning evaluation of num_ants
+
+        Args:
+            sep: Seperation, how much the number of ants increases by each evaluation. Defaults to 50.
+            max: Maximum, the max num_ants. Defaults to 300.
+        """
+        current = sep
+        arr_result = []
+        arr_x = []
+        while (current<=max):
+            # Changing num_ants
+            self.num_ants = current
+            
+            # Resetting current best path, pheramones and ants
+            self.pheramones = self.init_pheramones(self.distances)
+            self.ants = self.generate_ants(self.num_ants, scatter=True)
+            self.converged_at = 0
+            
+            # Running the simulation
+            print("Current Num Ants: " + str(self.num_ants))
+            self.run()
+            print("")
+            
+            # Storing the result
+            arr_result.append(self.converged_at)
+            arr_x.append(current)
+            current += sep
+        
+        # for x in arr_result:
+        #     print(x),
+        plot.plot(arr_x, arr_result)
+        plot.show()
         
         
 if __name__ == "__main__":
     random.seed(1)
     np.random.seed(1)
     np.seterr(divide='ignore')
-    graph_path = "./TSPLIB_XML/" + input("Graph name here (Graphs stored in ./TSPLIB_XML): ")
+    # graph_path = "./TSPLIB_XML/burma14.xml"
+    graph_path = "./TSPLIB_XML/brazil58.xml"
+    # graph_path = "./TSPLIB_XML/" + input("Graph name here (Graphs stored in ./TSPLIB_XML): ")
     print("")
     ACO = ACO_TSP(graph_path=graph_path)
     ACO.run()
+    # ACO.run_eval_epoch(sep=20, max=300)
+    # ACO.run_eval_ants(sep=1, max=30)
 

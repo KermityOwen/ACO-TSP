@@ -34,7 +34,7 @@ class Ants:
             pher_paths = np.array(pheramones[self.current_pos])
             
             # Heuristic to make higher pheramones exponentially more attractive
-            pher_paths = np.power(pher_paths, 2)  
+            pher_paths = np.power(pher_paths, 2)
             
             # All possible path to travel to from current node and their visibilities 
             vis_paths = np.array(temp_vis[self.current_pos]) 
