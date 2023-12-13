@@ -53,7 +53,6 @@ class Ants:
             # Getting 0,0 of the non zero list eliminates the chances of choosing past visited nodes
             next_node = np.nonzero(prob_paths>rand)[0][0]
             
-            # print(possible_paths)
             # print(prob_paths)
             # print(rand)
             # print(next_node)
