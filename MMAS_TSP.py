@@ -148,29 +148,45 @@ class MMAS_TSP:
 
 
     def update_best_pher(self):
-        """ Update current best path based on all ants traversed path
+        """ Update current best path based on all ants traversed path 
+            and updates pheramones as well due to this being Elitist
         """
+        # Sets initial cost as first ant
         initial_cost = self.ants[0].eval_cost(self.distances)
+        
+        # Sets local best distance
         local_best = initial_cost
+        
+        # Initialises best_ant as the first ant of the list
         best_ant = self.ants[0]
+        
+        # How many ants have converged
         counter = 0
         
+        # Loops through every ant in the colony
         for ant in self.ants:
+            # Cost has to be used and compared multiple times later
             cost = ant.eval_cost(self.distances)
+            
+            # If cost is greater than GLOBAL best path replace the current best path and distance
             if cost < self.current_best_dis:
                 self.current_best_path = ant.found_path
                 self.current_best_dis = cost
             
+            # if the current cost beats the local best then sets the local best as current cost
+            # and the best ant as current ant
             if cost <= local_best:
+                local_best = cost
                 best_ant = ant    
             
+            # If the ants find the same path increment counter
             if initial_cost == cost:
-                # print(initial_cost)
-                # print(cost)
                 counter += 1
-                
+        
+        # Updates pheramones based on best_ants path and distance
         self.pheramones = best_ant.eval_pher_update(self.dropoff_rate, self.pheramones, self.distances)
         
+        # If more than 90% of ants are on the same path, it is considered converged
         if counter > self.num_ants * 0.9:
             return True
         return False
@@ -232,9 +248,13 @@ class MMAS_TSP:
     def run(self):
         """ Run max_epoch number of iterations of the ACO
         """
+        # Set counter for when the colony has converged at max_epoch
         converged_n = self.max_epoch
+        
+        # Running max_epoch iterations of an epoch
         for n in range(0, self.max_epoch):
             is_converged = self.epoch()
+            # If it is converged break out to save processing power / time
             if (is_converged):
                 converged_n = n
                 break
@@ -245,8 +265,6 @@ class MMAS_TSP:
         print("Final Path: " + str(found_path))
         print("Total Distance: " + str(eval_cost))
         print("Converged at (process killed at): " + str(converged_n))
-        # print(self.max_epoch)
-        # print(self.pheramones)
         
         
 if __name__ == "__main__":
@@ -254,8 +272,8 @@ if __name__ == "__main__":
     np.random.seed(1)
     np.seterr(divide='ignore')
     # graph_path = "./TSPLIB_XML/burma14.xml"
-    graph_path = "./TSPLIB_XML/brazil58.xml"
-    # graph_path = "./TSPLIB_XML/" + input("Graph name here (Graphs stored in ./TSPLIB_XML): ")
+    # graph_path = "./TSPLIB_XML/brazil58.xml"
+    graph_path = "./TSPLIB_XML/" + input("Graph name here (Graphs stored in ./TSPLIB_XML): ")
     print("")
     MMAS = MMAS_TSP(graph_path=graph_path)
     MMAS.run()

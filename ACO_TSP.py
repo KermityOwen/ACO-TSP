@@ -150,7 +150,7 @@ class ACO_TSP:
         Returns:
             convergence: Whether or not the colony has converged into a path.
         """
-        # Sets initial cost as first ant and counter
+        # Sets initial cost as first ant
         initial_cost = self.ants[0].eval_cost(self.distances)
         
         # How many ants have converged
